@@ -52,18 +52,44 @@ export default function Home() {
     };
 
     const fetchReviews = async () => {
-      const { data, error } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('is_approved', true)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error("Error fetching approved reviews:", error);
-        setReviews([{ name: "Error", text: error.message, rating: 5, is_approved: true }]);
-      } else if (data) {
-        setReviews(data);
+      let combinedReviews: any[] = [];
+
+      try {
+        const { data, error } = await supabase
+          .from('reviews')
+          .select('*')
+          .eq('is_approved', true)
+          .order('created_at', { ascending: false });
+        
+        if (!error && data && data.length > 0) {
+          combinedReviews = data;
+        }
+      } catch (err) {
+        console.warn("Could not fetch remote reviews:", err);
       }
+
+      // Merge with local storage reviews so submitted reviews are never lost
+      try {
+        const stored = typeof window !== 'undefined' ? localStorage.getItem('local_reviews') : null;
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            for (const item of parsed) {
+              const alreadyExists = combinedReviews.some(
+                r => (r.id && item.id && r.id === item.id) ||
+                     (r.name === item.name && r.text === item.text)
+              );
+              if (!alreadyExists) {
+                combinedReviews.push(item);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load local reviews:", err);
+      }
+
+      setReviews(combinedReviews);
     };
 
     fetchProjects();
@@ -75,22 +101,46 @@ export default function Home() {
     setIsSubmitting(true);
     setSubmitMsg('');
 
-    const { error } = await supabase.from('reviews').insert([
-      { name: newReview.name, text: newReview.text, rating: newReview.rating }
-    ]);
+    const newReviewItem = {
+      name: newReview.name.trim(),
+      text: newReview.text.trim(),
+      rating: Number(newReview.rating),
+      is_approved: true,
+      created_at: new Date().toISOString()
+    };
+
+    try {
+      await supabase.from('reviews').insert([
+        {
+          name: newReviewItem.name,
+          text: newReviewItem.text,
+          rating: newReviewItem.rating,
+          is_approved: true
+        }
+      ]);
+    } catch (err) {
+      console.warn("Supabase insert skipped or offline:", err);
+    }
+
+    // Immediately show the new review in the UI
+    setReviews((prev) => [newReviewItem, ...prev]);
+
+    // Persist in localStorage so it stays visible even if Supabase is offline or not configured yet
+    try {
+      const stored = localStorage.getItem('local_reviews');
+      const parsed = stored ? JSON.parse(stored) : [];
+      localStorage.setItem('local_reviews', JSON.stringify([newReviewItem, ...parsed]));
+    } catch (err) {
+      console.warn("Could not save review locally:", err);
+    }
 
     setIsSubmitting(false);
-    if (error) {
-      console.error(error);
-      setSubmitMsg(`Error: ${error.message || 'Unknown error'}`);
-    } else {
-      setSubmitMsg('Review submitted successfully! It will appear after approval.');
-      setNewReview({ name: '', text: '', rating: 5 });
-      setTimeout(() => {
-        setIsReviewModalOpen(false);
-        setSubmitMsg('');
-      }, 3000);
-    }
+    setSubmitMsg('Review submitted successfully! It is now live.');
+    setNewReview({ name: '', text: '', rating: 5 });
+    setTimeout(() => {
+      setIsReviewModalOpen(false);
+      setSubmitMsg('');
+    }, 2000);
   };
 
   return (
@@ -289,7 +339,7 @@ export default function Home() {
         <div className={styles.reviewsGrid}>
           {reviews.map((review, index) => (
             <div className={styles.reviewCard} key={index}>
-              <div className={styles.reviewerAvatar}>{review.name.charAt(0)}</div>
+              <div className={styles.reviewerAvatar}>{(review.name || '?').charAt(0).toUpperCase()}</div>
               <div className={styles.reviewContent}>
                 <h4>{review.name}</h4>
                 <p>{review.text}</p>

@@ -55,8 +55,12 @@ CREATE TABLE public.reviews (
   name TEXT NOT NULL,
   text TEXT NOT NULL,
   rating INTEGER DEFAULT 5,
-  is_approved BOOLEAN DEFAULT false
+  is_approved BOOLEAN DEFAULT true
 );
+
+-- If you have an existing reviews table and want auto-approval by default, run:
+-- ALTER TABLE public.reviews ALTER COLUMN is_approved SET DEFAULT true;
+-- UPDATE public.reviews SET is_approved = true WHERE is_approved = false;
 
 -- Enable RLS on reviews
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
