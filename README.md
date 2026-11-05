@@ -24,29 +24,35 @@ A modern, responsive, and dynamic portfolio website for **Sumanan**, a professio
 ## 📦 Getting Started
 
 ### Prerequisites
+
 Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
 
 ### Installation
 
 1. **Clone the repository (or navigate to the project directory):**
+
    ```bash
    cd sspp
    ```
 
 2. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 3. **Set up Environment Variables:**
    Create a `.env.local` file in the root directory and add your Supabase credentials:
+
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
-   *(Note: You will need a Supabase project set up with `projects` and `reviews` tables as defined in the `supabase-setup.sql` file.)*
+
+   _(Note: You will need a Supabase project set up with `projects` and `reviews` tables as defined in the `supabase-setup.sql` file.)_
 
 4. **Run the development server:**
+
    ```bash
    npm run dev
    ```
@@ -57,6 +63,7 @@ Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
 ## 🗄️ Database Schema
 
 This project relies on Supabase. A setup file (`supabase-setup.sql`) is included to quickly initialize the necessary tables:
+
 - `projects`: Stores video portfolio data (title, category, video URL, thumbnail).
 - `reviews`: Stores client testimonials (name, text, rating, approval status).
 
@@ -67,3 +74,5 @@ To access the admin panel for uploading projects and managing reviews, navigate 
 ## 📄 License
 
 This project is proprietary and created for **S Square Studio**. All video contents and branding are copyright of their respective owners.
+
+author:suman
